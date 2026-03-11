@@ -33,19 +33,13 @@ const Login = () => {
       return;
     }
 
-    const expectedApiKey = process.env.REACT_APP_LENDER_API_KEY;
-    if (role === "lender" && apiKey.trim() !== expectedApiKey) {
-      setError("Invalid API Key");
-      return;
-    }
-
     const endpoint =
       role === "lender"
         ? "http://localhost:5000/api/lender/login"
         : "http://localhost:5000/api/vendor/login";
 
     const payload = { email, password, role };
-    if (role === "lender") payload.apiKey = apiKey;
+    if (role === "lender") payload.apiKey = apiKey.trim();
 
     try {
       setLoading(true);

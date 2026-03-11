@@ -233,7 +233,8 @@ const loginLender = async (req, res) => {
     }
 
     const lenderApiKey = getLenderLoginApiKey();
-    if (lenderApiKey && apiKey !== lenderApiKey) {
+    const incomingApiKey = typeof apiKey === "string" ? apiKey.trim() : "";
+    if (lenderApiKey && incomingApiKey !== lenderApiKey.trim()) {
       return res.status(403).json({
         success: false,
         message: "Invalid API Key",
