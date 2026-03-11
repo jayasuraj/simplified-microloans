@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
@@ -190,7 +191,7 @@ const LoanRequestForm = () => {
 
     setLoadingEmailOtp(true);
     try {
-      await axios.post("http://localhost:5000/api/otp/send", {
+      await axios.post(`${API_BASE_URL}/otp/send`, {
         email: formData.email,
       });
       alert("OTP sent to your email.");
@@ -210,7 +211,7 @@ const LoanRequestForm = () => {
 
     setLoadingVerifyEmail(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/otp/verify", {
+      const res = await axios.post(`${API_BASE_URL}/otp/verify`, {
         email: formData.email,
         otp: emailOtp,
       });
@@ -238,7 +239,7 @@ const LoanRequestForm = () => {
 
     setLoadingSetupTOTP(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/totp/setup", {
+      const res = await axios.post(`${API_BASE_URL}/totp/setup`, {
         email: formData.email,
       });
       setQrCodeUrl(res.data.qrCode);
@@ -259,7 +260,7 @@ const LoanRequestForm = () => {
 
     setLoadingVerifyTOTP(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/totp/verify", {
+      const res = await axios.post(`${API_BASE_URL}/totp/verify`, {
         email: formData.email,
         token: totpCode,
       });
@@ -372,7 +373,7 @@ const LoanRequestForm = () => {
 
     try {
       setSubmitting(true);
-      await axios.post("http://localhost:5000/api/loan/apply", submission, {
+      await axios.post(`${API_BASE_URL}/loan/apply`, submission, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

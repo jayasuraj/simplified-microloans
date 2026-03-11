@@ -4,6 +4,7 @@ import axios from "axios";
 import { BrowserProvider, parseEther } from "ethers";
 import { Layers3, Clock3, CircleCheck, CircleX, Sparkles } from "lucide-react";
 import Button from "../../components/common/Button";
+import { API_BASE_URL } from "../../utils/constants";
 
 /* -------------------------- Small UI Components -------------------------- */
 
@@ -349,13 +350,14 @@ const LenderLoans = () => {
 
   const lenderId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
-  const BASE_URL = "http://localhost:5000";
+  const API_URL = API_BASE_URL;
+  const BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
   // Fetch all loans for this lender
   const fetchLoans = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BASE_URL}/api/lender/${lenderId}/loans`, {
+      const res = await axios.get(`${API_URL}/lender/${lenderId}/loans`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLoans(res.data.loans || []);
@@ -481,7 +483,7 @@ const LenderLoans = () => {
 
     try {
       await axios.put(
-        `${BASE_URL}/api/lender/loans/${loan._id}/approve`,
+        `${API_URL}/lender/loans/${loan._id}/approve`,
         { txHash },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -505,7 +507,7 @@ const LenderLoans = () => {
 
     try {
       const response = await axios.put(
-        `${BASE_URL}/api/lender/loans/${loanId}/reject`,
+        `${API_URL}/lender/loans/${loanId}/reject`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

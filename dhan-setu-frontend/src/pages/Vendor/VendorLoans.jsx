@@ -16,6 +16,7 @@ import {
   CalendarDays
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../utils/constants";
 
 const VendorLoans = () => {
   const [loans, setLoans] = useState([]);
@@ -48,7 +49,7 @@ const VendorLoans = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/vendor/loans/${userId}`,
+        `${API_BASE_URL}/vendor/loans/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("ðŸš€ Loans fetched:", res.data.loans);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import axios from "axios";
 import { Wallet, Loader, Lock, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -32,7 +33,7 @@ const ResetPassword = () => {
   const validateToken = async (resetToken) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/validate-reset-token",
+        `${API_BASE_URL}/auth/validate-reset-token`,
         { token: resetToken }
       );
       setTokenValid(response.data.valid);
@@ -82,7 +83,7 @@ const ResetPassword = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:5000/api/auth/reset-password",
+        `${API_BASE_URL}/auth/reset-password`,
         {
           token,
           password,

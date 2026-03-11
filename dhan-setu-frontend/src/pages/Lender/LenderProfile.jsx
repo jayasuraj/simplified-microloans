@@ -1,6 +1,7 @@
 // src/pages/lender/LenderProfile.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -18,6 +19,8 @@ import {
   Settings,
   CreditCard,
 } from "lucide-react";
+
+const BASE_URL = API_BASE_URL;
 
 /* -------------------------- Professional UI Components -------------------------- */
 
@@ -235,14 +238,12 @@ const LenderProfile = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://localhost:5000";
-
   useEffect(() => {
     const fetchLender = async () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${BASE_URL}/api/lender/profile/${lenderId}`,
+          `${BASE_URL}/lender/profile/${lenderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -285,7 +286,7 @@ const LenderProfile = () => {
       setUploading(true);
       setError("");
       const res = await axios.post(
-        `${BASE_URL}/api/lender/upload-photo/${lenderId}`,
+        `${BASE_URL}/lender/upload-photo/${lenderId}`,
         formData,
         {
           headers: {

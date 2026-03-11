@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Wallet, Loader, CheckCircle, Clock, Mail } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const VerifyOTP = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/otp/send",
+        `${API_BASE_URL}/otp/send`,
         { email }
       );
 
@@ -81,7 +82,7 @@ const VerifyOTP = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/otp/verify",
+        `${API_BASE_URL}/otp/verify`,
         {
           email,
           otp: otpCode,

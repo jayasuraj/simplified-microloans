@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { ethers } from "ethers";
 import { CreditCard, AlertCircle, CheckCircle, FileText } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
+import { API_BASE_URL } from "../../utils/constants";
 
 /* ------------------------ Small UI Components (local) ------------------------ */
 
@@ -137,7 +138,7 @@ const VendorTransactions = () => {
         if (!vendorId || !token) throw new Error("User not logged in.");
 
         const res = await axios.get(
-          `http://localhost:5000/api/vendor/dashboard/${vendorId}`,
+          `${API_BASE_URL}/vendor/dashboard/${vendorId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -263,7 +264,7 @@ const VendorTransactions = () => {
 
       // Send repayment info to backend
       const response = await axios.post(
-        "http://localhost:5000/api/vendor/repay",
+        `${API_BASE_URL}/vendor/repay`,
         {
           vendorId,
           amount,

@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { TrendingUp, Calendar, ArrowUpRight, Filter, Search, Coins, Wallet, BadgeCheck, Layers3 } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const MOCK_INVESTMENTS = [
   { id: 1, vendor: "Raj Kumar", amount: "2.50", date: "2026-03-01", status: "Repaid", returns: "0.35", roi: "14%" },
@@ -24,7 +25,7 @@ const LenderInvestmentHistory = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:5000/api/lender/${userId}/investments`,
+        `${API_BASE_URL}/lender/${userId}/investments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setInvestments(res.data.investments || MOCK_INVESTMENTS);

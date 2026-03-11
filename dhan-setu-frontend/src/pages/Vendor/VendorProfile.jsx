@@ -19,8 +19,9 @@ import {
   Save,
   RefreshCw,
 } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = API_BASE_URL;
 
 const LoadingState = () => (
   <div className="flex flex-col items-center justify-center min-h-screen gap-4">
@@ -88,7 +89,7 @@ const VendorProfile = () => {
   const fetchVendor = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BASE_URL}/api/vendor/profile/${vendorId}`, {
+      const res = await axios.get(`${BASE_URL}/vendor/profile/${vendorId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -133,7 +134,7 @@ const VendorProfile = () => {
     try {
       setUploading(true);
       setError("");
-      const res = await axios.post(`${BASE_URL}/api/vendor/${vendorId}/upload-photo`, formData, {
+      const res = await axios.post(`${BASE_URL}/vendor/${vendorId}/upload-photo`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -158,7 +159,7 @@ const VendorProfile = () => {
       setSaving(true);
       setError("");
       await axios.put(
-        `${BASE_URL}/api/vendor/profile/${vendorId}`,
+        `${BASE_URL}/vendor/profile/${vendorId}`,
         {
           name: form.name,
           businessName: form.businessName,

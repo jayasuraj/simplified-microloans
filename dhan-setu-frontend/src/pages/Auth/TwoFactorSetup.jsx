@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { Wallet, Loader, Shield, Copy, CheckCircle, Smartphone, Key } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 /**
  * Two-Factor Authentication Setup Page
@@ -35,7 +36,7 @@ const TwoFactorSetup = () => {
       
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/auth/2fa/generate",
+        `${API_BASE_URL}/auth/2fa/generate`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -87,7 +88,7 @@ const TwoFactorSetup = () => {
       
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/auth/2fa/verify",
+        `${API_BASE_URL}/auth/2fa/verify`,
         { code, secret },
         {
           headers: { Authorization: `Bearer ${token}` }

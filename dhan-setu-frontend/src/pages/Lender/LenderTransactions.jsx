@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { ArrowDownLeft, ArrowUpRight, BadgeIndianRupee, Search, Filter, Activity } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 /* -------------------------- Helper: direction mapping -------------------------- */
 
@@ -191,7 +192,7 @@ const LenderTransactions = () => {
   const lenderId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
 
-  const BASE_URL = "http://localhost:5000";
+  const BASE_URL = API_BASE_URL;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -213,7 +214,7 @@ const LenderTransactions = () => {
       setLoading(true);
       setError("");
       const response = await axios.get(
-        `${BASE_URL}/api/lender/transactions/${lenderId}`,
+        `${BASE_URL}/lender/transactions/${lenderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

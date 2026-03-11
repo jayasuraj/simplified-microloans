@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Wallet, CheckCircle, AlertCircle, ArrowRight, DollarSign } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const LenderWithdrawal = () => {
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
@@ -32,7 +33,7 @@ const LenderWithdrawal = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        `http://localhost:5000/api/lender/${userId}/withdrawal`,
+        `${API_BASE_URL}/lender/${userId}/withdrawal`,
         {
           amount: parseFloat(withdrawalAmount),
           destinationWallet: walletAddress,

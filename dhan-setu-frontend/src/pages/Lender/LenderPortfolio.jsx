@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { TrendingUp, PieChart, BarChart3, Activity, Wallet, Target } from "lucide-react";
 import { PieChart as RechartsPI, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { API_BASE_URL } from "../../utils/constants";
 
 const LenderPortfolio = () => {
   const [portfolioData, setPortfolioData] = useState(null);
@@ -16,7 +17,7 @@ const LenderPortfolio = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:5000/api/lender/portfolio/${userId}`,
+        `${API_BASE_URL}/lender/portfolio/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPortfolioData(res.data);

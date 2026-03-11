@@ -14,6 +14,7 @@ import {
   DollarSign,
   PlusCircle
 } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const VendorDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -37,7 +38,7 @@ const VendorDashboard = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/vendor/dashboard/${userId}`,
+        `${API_BASE_URL}/vendor/dashboard/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

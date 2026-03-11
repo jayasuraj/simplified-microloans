@@ -1,6 +1,7 @@
 // src/pages/lender/LenderSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 import {
   Settings,
   Bell,
@@ -22,6 +23,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+const BASE_URL = API_BASE_URL;
+
 const LenderSettings = () => {
   const lenderId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
@@ -33,8 +36,6 @@ const LenderSettings = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const BASE_URL = "http://localhost:5000";
 
   // Settings State
   const [lender, setLender] = useState(null);
@@ -65,7 +66,7 @@ const LenderSettings = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${BASE_URL}/api/lender/profile/${lenderId}`,
+          `${BASE_URL}/lender/profile/${lenderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -147,7 +148,7 @@ const LenderSettings = () => {
       }
 
       const response = await axios.put(
-        `${BASE_URL}/api/lender/update/${lenderId}`,
+        `${BASE_URL}/lender/update/${lenderId}`,
         updateData,
         {
           headers: {

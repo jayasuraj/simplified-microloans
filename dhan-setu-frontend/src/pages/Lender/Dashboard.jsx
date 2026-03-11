@@ -19,6 +19,7 @@ import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
 import Alert from "../../components/common/Alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { API_BASE_URL } from "../../utils/constants";
 
 const LenderDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -42,7 +43,7 @@ const LenderDashboard = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/lender/dashboard/${userId}`,
+        `${API_BASE_URL}/lender/dashboard/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

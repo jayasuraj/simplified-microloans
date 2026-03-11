@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { Wallet, Loader, CheckCircle, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "../../utils/constants";
 
 const Register = () => {
   const [role, setRole] = useState("");
@@ -159,8 +160,8 @@ const Register = () => {
       setLoading(true);
       const endpoint =
         role === "lender"
-          ? "http://localhost:5000/api/lender/register"
-          : "http://localhost:5000/api/vendor/register";
+          ? `${API_BASE_URL}/lender/register`
+          : `${API_BASE_URL}/vendor/register`;
 
       const response = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "application/json" },
