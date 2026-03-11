@@ -1,5 +1,5 @@
 // src/pages/Lender/LenderPortfolio.jsx
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { TrendingUp, PieChart, BarChart3, Activity, Wallet, Target } from "lucide-react";
 import { PieChart as RechartsPI, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -12,11 +12,7 @@ const LenderPortfolio = () => {
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchPortfolioData();
-  }, []);
-
-  const fetchPortfolioData = async () => {
+  const fetchPortfolioData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(
@@ -31,7 +27,11 @@ const LenderPortfolio = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, userId]);
+
+  useEffect(() => {
+    fetchPortfolioData();
+  }, [fetchPortfolioData]);
 
   const mockPortfolioData = {
     walletBalance: "15.420 ETH",
@@ -73,6 +73,12 @@ const LenderPortfolio = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {error && (
+          <div className="rounded-2xl border border-amber-300/40 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {error}
+          </div>
+        )}
+
         {/* Header */}
         <div className="space-y-2">
           <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">Portfolio Overview</p>

@@ -588,7 +588,12 @@ const Home = () => {
                 <ul className="space-y-3">
                   {col.links.map((link, j) => (
                     <li key={j}>
-                      <a href="#" className="text-gray-500 text-sm hover:text-white transition-colors">{link}</a>
+                      <a
+                        href={`/${link.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}
+                        className="text-gray-500 text-sm hover:text-white transition-colors"
+                      >
+                        {link}
+                      </a>
                     </li>
                   ))}
                 </ul>

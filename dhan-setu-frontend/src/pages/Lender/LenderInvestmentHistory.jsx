@@ -1,7 +1,15 @@
 // src/pages/Lender/LenderInvestmentHistory.jsx
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { TrendingUp, Calendar, ArrowUpRight, Filter, Search, Coins, Wallet, BadgeCheck, Layers3 } from "lucide-react";
+
+const MOCK_INVESTMENTS = [
+  { id: 1, vendor: "Raj Kumar", amount: "2.50", date: "2026-03-01", status: "Repaid", returns: "0.35", roi: "14%" },
+  { id: 2, vendor: "Priya Singh", amount: "5.00", date: "2026-02-15", status: "Repaid", returns: "0.75", roi: "15%" },
+  { id: 3, vendor: "Arjun Patel", amount: "3.75", date: "2026-02-01", status: "Active", returns: "0.25", roi: "6.7%" },
+  { id: 4, vendor: "Meera Sharma", amount: "4.20", date: "2026-01-20", status: "Active", returns: "0.52", roi: "12.4%" },
+  { id: 5, vendor: "Vikram Das", amount: "6.00", date: "2025-12-15", status: "Repaid", returns: "1.08", roi: "18%" },
+];
 
 const LenderInvestmentHistory = () => {
   const [investments, setInvestments] = useState([]);
@@ -12,33 +20,25 @@ const LenderInvestmentHistory = () => {
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchInvestmentHistory();
-  }, []);
-
-  const fetchInvestmentHistory = async () => {
+  const fetchInvestmentHistory = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(
         `http://localhost:5000/api/lender/${userId}/investments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setInvestments(res.data.investments || mockInvestments);
+      setInvestments(res.data.investments || MOCK_INVESTMENTS);
     } catch (err) {
       // Use mock data for demo
-      setInvestments(mockInvestments);
+      setInvestments(MOCK_INVESTMENTS);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, userId]);
 
-  const mockInvestments = [
-    { id: 1, vendor: "Raj Kumar", amount: "2.50", date: "2026-03-01", status: "Repaid", returns: "0.35", roi: "14%" },
-    { id: 2, vendor: "Priya Singh", amount: "5.00", date: "2026-02-15", status: "Repaid", returns: "0.75", roi: "15%" },
-    { id: 3, vendor: "Arjun Patel", amount: "3.75", date: "2026-02-01", status: "Active", returns: "0.25", roi: "6.7%" },
-    { id: 4, vendor: "Meera Sharma", amount: "4.20", date: "2026-01-20", status: "Active", returns: "0.52", roi: "12.4%" },
-    { id: 5, vendor: "Vikram Das", amount: "6.00", date: "2025-12-15", status: "Repaid", returns: "1.08", roi: "18%" },
-  ];
+  useEffect(() => {
+    fetchInvestmentHistory();
+  }, [fetchInvestmentHistory]);
 
   const filteredInvestments = investments.filter((inv) => {
     const matchesStatus = filter === "all" || inv.status.toLowerCase() === filter;

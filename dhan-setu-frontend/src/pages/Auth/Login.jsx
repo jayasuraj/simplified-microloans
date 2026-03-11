@@ -302,9 +302,9 @@ const Login = () => {
           {/* Footer note */}
           <p className="mt-6 text-center text-xs text-gray-600">
             By signing in, you agree to our{" "}
-            <a href="#" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">Terms</a>
+            <a href="/terms" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">Terms</a>
             {" "}and{" "}
-            <a href="#" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">Privacy Policy</a>.
+            <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors underline underline-offset-2">Privacy Policy</a>.
           </p>
         </div>
       </div>
