@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/constants";
 import {
   Eye, EyeOff, Wallet, Loader, Shield, Zap, Lock,
   TrendingUp, ArrowRight, CheckCircle
@@ -35,8 +36,8 @@ const Login = () => {
 
     const endpoint =
       role === "lender"
-        ? "http://localhost:5000/api/lender/login"
-        : "http://localhost:5000/api/vendor/login";
+        ? `${API_BASE_URL}/lender/login`
+        : `${API_BASE_URL}/vendor/login`;
 
     const payload = { email, password, role };
     if (role === "lender") payload.apiKey = apiKey.trim();
