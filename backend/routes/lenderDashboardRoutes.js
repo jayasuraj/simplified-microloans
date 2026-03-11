@@ -3,7 +3,6 @@ const router = express.Router();
 const authMiddleware = require("../middlewares/auth");
 const multer = require("multer");
 const path = require("path");
-const authenticate = require("../middlewares/authenticate"); // ✅ Auth middleware
 
 const {
   getLenderDashboard,

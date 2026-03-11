@@ -1,72 +1,247 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const { ethers } = require("ethers");
+
 const Loan = require("../models/Loan");
 const Transaction = require("../models/Transaction");
 const Lender = require("../models/Lender");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const bcrypt = require("bcrypt");
-const { ethers } = require("ethers");
+const { encryptKYC } = require("../utils/kycEncryption");
+const { sendLenderApiKeyEmail } = require("../utils/emailService");
 
-const provider = new ethers.JsonRpcProvider(process.env.GANACHE_RPC_URL); // or any valid endpoin
-
+const provider = new ethers.JsonRpcProvider(
+  process.env.GANACHE_RPC_URL || "http://127.0.0.1:8545"
+);
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
-// Setup multer for image upload (storing files in 'uploads' directory)
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Specify the upload folder
-  },
-  filename: function (req, file, cb) {
-    // Generate a unique filename for the uploaded file
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+const isHashedPassword = (value = "") => value.startsWith("$2a$") || value.startsWith("$2b$");
 
-const upload = multer({ storage: storage }).single("image"); // "image" is the key used to upload the file
+const comparePassword = async (plain, stored) => {
+  if (!stored) return false;
+  if (isHashedPassword(stored)) return bcrypt.compare(plain, stored);
+  return plain === stored;
+};
 
-// POST /api/lender/register
+const hashPassword = async (plain) => bcrypt.hash(plain, 10);
+
+const getLenderLoginApiKey = () => process.env.LENDER_API_KEY || process.env.API_KEY || "";
+
 const registerLender = async (req, res) => {
   try {
-    const { fullname, email, password, ...rest } = req.body;
+    const {
+      fullname,
+      surname,
+      email,
+      aadhaarNumber,
+      phone,
+      walletAddress,
+      profileImage,
+      password,
+      role,
+      language,
+      theme,
+      notifyByEmail,
+      notifyBySMS,
+    } = req.body;
 
-    // Check if lender already exists
-    const existingLender = await Lender.findOne({ email });
-    if (existingLender) {
+    // Trim whitespace from string fields
+    const trimmedFullname = fullname?.trim();
+    const trimmedEmail = email?.trim().toLowerCase();
+    const trimmedPhone = phone?.trim();
+    const trimmedAadhaar = aadhaarNumber?.trim();
+
+    if (!trimmedFullname || !trimmedEmail || !trimmedAadhaar || !walletAddress || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email already registered",
+        message: "Required fields are missing or empty.",
+        missing: {
+          fullname: !trimmedFullname,
+          email: !trimmedEmail,
+          aadhaarNumber: !trimmedAadhaar,
+          walletAddress: !walletAddress,
+          password: !password,
+        },
       });
     }
 
-    // Create new lender with raw password
-    const newLender = new Lender({
-      fullname,
-      email,
-      password, // Store password as raw text
-      ...rest,
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format.",
+      });
+    }
+
+    // Validate phone format if provided
+    if (trimmedPhone && !/^[6-9]\d{9}$/.test(trimmedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid phone number. Must be a valid Indian mobile number (10 digits, starting with 6-9).",
+      });
+    }
+
+    const existingLender = await Lender.findOne({
+      $or: [
+        { email: trimmedEmail },
+        { aadhaarNumber: trimmedAadhaar },
+        ...(trimmedPhone ? [{ phone: trimmedPhone }] : []),
+      ],
     });
 
-    await newLender.save();
+    if (existingLender) {
+      if (process.env.NODE_ENV === "development" || process.env.ALLOW_TEST_REREGISTER === "true") {
+        const encryptedKYC = encryptKYC(trimmedAadhaar);
+        const hashedPassword = await hashPassword(password);
 
-    res.status(201).json({
+        existingLender.fullname = trimmedFullname;
+        existingLender.surname = surname?.trim() || "";
+        existingLender.email = trimmedEmail;
+        existingLender.aadhaarNumber = trimmedAadhaar;
+        existingLender.phone = trimmedPhone || null;
+        existingLender.walletAddress = walletAddress;
+        existingLender.encryptedKYC = encryptedKYC;
+        existingLender.profileImage = profileImage || existingLender.profileImage;
+        existingLender.password = hashedPassword;
+        existingLender.role = role || "lender";
+        existingLender.language = language || existingLender.language;
+        existingLender.theme = theme || existingLender.theme;
+        if (typeof notifyByEmail === "boolean") existingLender.notifyByEmail = notifyByEmail;
+        if (typeof notifyBySMS === "boolean") existingLender.notifyBySMS = notifyBySMS;
+
+        await existingLender.save();
+
+        const lenderApiKey = getLenderLoginApiKey();
+        if (lenderApiKey) {
+          const emailResult = await sendLenderApiKeyEmail(
+            existingLender.email,
+            existingLender.fullname,
+            lenderApiKey
+          );
+          if (!emailResult.success) {
+            console.warn("Lender API key email failed (test mode):", emailResult.error);
+          }
+        } else {
+          console.warn("Lender API key email skipped: LENDER_API_KEY/API_KEY is not configured.");
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Account updated successfully (test mode)",
+          data: {
+            _id: existingLender._id,
+            fullname: existingLender.fullname,
+            email: existingLender.email,
+            role: existingLender.role,
+          },
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: "Email or Aadhaar already registered.",
+        duplicateField: existingLender.email === trimmedEmail ? "email"
+          : existingLender.phone === trimmedPhone ? "phone"
+          : "aadhaarNumber",
+      });
+    }
+
+    const encryptedKYC = encryptKYC(trimmedAadhaar);
+    const hashedPassword = await hashPassword(password);
+
+    const lender = await Lender.create({
+      fullname: trimmedFullname,
+      surname: surname?.trim() || "",
+      email: trimmedEmail,
+      aadhaarNumber: trimmedAadhaar,
+      phone: trimmedPhone || null,
+      walletAddress,
+      encryptedKYC,
+      profileImage,
+      password: hashedPassword,
+      role: role || "lender",
+      language,
+      theme,
+      notifyByEmail,
+      notifyBySMS,
+    });
+
+    const lenderApiKey = getLenderLoginApiKey();
+    if (lenderApiKey) {
+      const emailResult = await sendLenderApiKeyEmail(
+        lender.email,
+        lender.fullname,
+        lenderApiKey
+      );
+      if (!emailResult.success) {
+        console.warn("Lender API key email failed:", emailResult.error);
+      }
+    } else {
+      console.warn("Lender API key email skipped: LENDER_API_KEY/API_KEY is not configured.");
+    }
+
+    return res.status(201).json({
       success: true,
       message: "Lender registered successfully",
-      data: { email: newLder.email },
+      data: {
+        _id: lender._id,
+        fullname: lender.fullname,
+        email: lender.email,
+        role: lender.role,
+      },
     });
   } catch (error) {
-    console.error("Error in registerLender:", error.message);
-    res.status(500).json({
+    console.error("registerLender error:", error);
+
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.keys(error.errors).map(
+        (field) => `${field}: ${error.errors[field].message}`
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: messages,
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `This ${field} is already registered.`,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: "Server error during registration",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// POST /api/lender/login
 const loginLender = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role, apiKey } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
+
+    if (role && role !== "lender") {
+      return res.status(403).json({ success: false, message: "Role mismatch. Please choose Lender." });
+    }
+
+    const lenderApiKey = getLenderLoginApiKey();
+    if (lenderApiKey && apiKey !== lenderApiKey) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid API Key",
+      });
+    }
 
     const lender = await Lender.findOne({ email });
+
     if (!lender) {
       return res.status(404).json({
         success: false,
@@ -74,22 +249,26 @@ const loginLender = async (req, res) => {
       });
     }
 
-    // Compare the entered password with the stored raw password
-    if (lender.password !== password) {
+    const isPasswordValid = await comparePassword(password, lender.password);
+
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: "Invalid password",
       });
     }
 
-    // Create a token for the lender
-    const token = jwt.sign(
-      { id: lender._id, role: lender.role },
-      JWT_SECRET,
-      { expiresIn: "1h" }
+    // Update lastLogin timestamp (use updateOne to bypass schema validation)
+    await Lender.updateOne(
+      { _id: lender._id },
+      { $set: { lastLogin: new Date() } }
     );
 
-    res.status(200).json({
+    const token = jwt.sign({ id: lender._id, role: lender.role }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
@@ -97,111 +276,109 @@ const loginLender = async (req, res) => {
       role: lender.role,
     });
   } catch (error) {
-    console.error("Error in loginLender:", error.message);
-    res.status(500).json({
+    console.error("loginLender error:", error.message);
+    return res.status(500).json({
       success: false,
       message: "Server error during login",
+      error: error.message,
     });
   }
 };
 
-// GET /api/lender/dashboard/:lenderId
-// GET /api/lender/dashboard/:lenderId
-// @route   GET /api/lender/dashboard/:lenderId
 const getLenderDashboard = async (req, res) => {
   const { lenderId } = req.params;
 
   try {
     if (!lenderId) {
-      return res.status(400).json({ message: "Lender ID is required." });
+      return res.status(400).json({ success: false, message: "Lender ID is required." });
     }
 
     const lender = await Lender.findById(lenderId);
+
     if (!lender) {
-      return res.status(404).json({ message: "Lender not found." });
+      return res.status(404).json({ success: false, message: "Lender not found." });
     }
 
-    // ✅ Get Wallet Balance using ethers
-    let walletBalance = "0.0000";
+    let walletBalanceEth = "0.0000";
+
     try {
       const balance = await provider.getBalance(lender.walletAddress);
-      walletBalance = ethers.formatEther(balance); // Convert from wei to ETH
+      walletBalanceEth = ethers.formatEther(balance);
     } catch (err) {
       console.warn("Wallet balance fetch failed:", err.message);
     }
 
-    // 🟡 Calculate total loans funded
-    const fundedLoans = await Loan.find({ lenderId, status: "Approved" });
+    const fundedLoans = await Loan.find({ lenderId, status: "Approved" }).lean();
 
-    const loansFunded = fundedLoans.reduce((sum, loan) => {
-      const amt = parseFloat(loan.loanAmount);
-      return sum + (isNaN(amt) ? 0 : amt);
-    }, 0);
+    const loansFunded = fundedLoans.length;
+    const totalFundedAmount = fundedLoans.reduce(
+      (sum, loan) => sum + (parseFloat(loan.loanAmount) || 0),
+      0
+    );
 
-    const activeVendorsSet = new Set(fundedLoans.map(loan => loan.vendorId?.toString()));
+    const activeVendorsSet = new Set(
+      fundedLoans.map((loan) => loan.vendorId?.toString()).filter(Boolean)
+    );
 
-    // 🟢 Last funded loan
-    const lastFundedLoan = await Loan.findOne({ lenderId, status: "Approved" })
-      .sort({ approvedAt: -1 })
-      .lean();
+    const lastFundedLoan = [...fundedLoans].sort(
+      (a, b) => new Date(b.approvedAt || b.updatedAt) - new Date(a.approvedAt || a.updatedAt)
+    )[0];
 
-    const lastLoanAmount = parseFloat(lastFundedLoan?.loanAmount) || 0;
-    const lastLoanDate = lastFundedLoan?.approvedAt
-      ? new Date(lastFundedLoan.approvedAt).toLocaleDateString("en-IN")
-      : "N/A";
-
-    // 🔵 Transactions and total received
-    const txns = await Transaction.find({ lenderId }).sort({ createdAt: -1 });
+    const txns = await Transaction.find({ lenderId }).sort({ createdAt: -1 }).lean();
 
     const totalReceived = txns
-      .filter(tx => tx.type === "Repayment")
-      .reduce((sum, tx) => {
-        const amt = parseFloat(tx.amount);
-        return sum + (isNaN(amt) ? 0 : amt);
-      }, 0);
+      .filter((tx) => tx.type === "Repayment")
+      .reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
 
-    const transactions = txns.map(tx => ({
-      date: tx.createdAt
-        ? new Date(tx.createdAt).toLocaleDateString("en-IN")
-        : "N/A",
+    const transactions = txns.map((tx) => ({
+      _id: tx._id,
+      date: tx.createdAt ? new Date(tx.createdAt).toLocaleDateString("en-IN") : "N/A",
+      createdAt: tx.createdAt,
       amount: parseFloat(tx.amount) || 0,
       type: tx.type || "Unknown",
+      purpose: tx.purpose || "",
+      hash: tx.hash || "",
     }));
 
-    // ✅ Final response
-    res.status(200).json({
-      walletBalance: parseFloat(walletBalance).toFixed(4), // 👈 shows like 0.0000
-      loansFunded: loansFunded.toFixed(4),
+    return res.status(200).json({
+      success: true,
+      lenderName: lender.fullname || "Lender",
+      walletBalance: `${parseFloat(walletBalanceEth).toFixed(4)} ETH`,
+      loansFunded,
+      totalFundedAmount: Number(totalFundedAmount.toFixed(4)),
       activeVendors: activeVendorsSet.size,
-      lastFundedLoan: {
-        amount: lastLoanAmount,
-        date: lastLoanDate,
-      },
-      nextExpectedRepayment: "N/A", // Optional: due-date logic
-      totalReceived: totalReceived.toFixed(4),
+      lastFundedLoan: lastFundedLoan
+        ? {
+            amount: parseFloat(lastFundedLoan.loanAmount) || 0,
+            date: lastFundedLoan.approvedAt
+              ? new Date(lastFundedLoan.approvedAt).toLocaleDateString("en-IN")
+              : "N/A",
+          }
+        : { amount: 0, date: "N/A" },
+      nextExpectedRepayment: "N/A",
+      totalReceived: Number(totalReceived.toFixed(4)),
       transactions,
     });
   } catch (err) {
-    console.error("Dashboard Error:", err);
-    res.status(500).json({ message: "Failed to fetch lender dashboard" });
+    console.error("getLenderDashboard error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch lender dashboard",
+      error: err.message,
+    });
   }
 };
 
-
-// POST /api/lender/upload-photo/:lenderId
 const uploadPhoto = async (req, res) => {
   const { lenderId } = req.params;
 
-  // Check if file is uploaded
   if (!req.file) {
     return res.status(400).json({ success: false, message: "No file uploaded." });
   }
 
   try {
-    // Construct the URL for the uploaded image
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
-    // Update the lender's profile image URL in the database
     const lender = await Lender.findByIdAndUpdate(
       lenderId,
       { profileImage: imageUrl },
@@ -218,21 +395,18 @@ const uploadPhoto = async (req, res) => {
       imageUrl,
     });
   } catch (err) {
-    console.error("Upload Error:", err.message);
-    return res.status(500).json({ success: false, message: "Image upload failed", error: err.message });
+    console.error("uploadPhoto error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Image upload failed",
+      error: err.message,
+    });
   }
 };
 
 const updateLenderSettings = async (req, res) => {
   const { lenderId } = req.params;
-  const {
-    password,
-    phone,
-    language,
-    theme,
-    notifyByEmail,
-    notifyBySMS,
-  } = req.body;
+  const { password, oldPassword, phone, language, theme, notifyByEmail, notifyBySMS } = req.body;
 
   try {
     const lender = await Lender.findById(lenderId);
@@ -241,23 +415,50 @@ const updateLenderSettings = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lender not found" });
     }
 
-    if (password) lender.password = password; // In production, hash this
-    if (phone) lender.phone = phone;
-    if (language) lender.language = language;
-    if (theme) lender.theme = theme;
-    if (typeof notifyByEmail !== "undefined") lender.notifyByEmail = notifyByEmail;
-    if (typeof notifyBySMS !== "undefined") lender.notifyBySMS = notifyBySMS;
+    // If updating password, validate old password first
+    if (password) {
+      if (!oldPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Old password is required to set a new password",
+        });
+      }
+
+      const isOldPasswordValid = await comparePassword(oldPassword, lender.password);
+      if (!isOldPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          message: "Old password is incorrect",
+        });
+      }
+
+      // Password must be at least 8 characters
+      if (password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be at least 8 characters long",
+        });
+      }
+
+      lender.password = await hashPassword(password);
+    }
+
+    if (phone !== undefined) lender.phone = phone;
+    if (language !== undefined) lender.language = language;
+    if (theme !== undefined) lender.theme = theme;
+    if (notifyByEmail !== undefined) lender.notifyByEmail = notifyByEmail;
+    if (notifyBySMS !== undefined) lender.notifyBySMS = notifyBySMS;
 
     await lender.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Settings updated successfully",
-      data: lender, // ✅ Send updated lender
+      data: lender,
     });
   } catch (error) {
-    console.error("Error updating settings:", error.message);
-    res.status(500).json({
+    console.error("updateLenderSettings error:", error.message);
+    return res.status(500).json({
       success: false,
       message: "Failed to update settings",
       error: error.message,
@@ -265,17 +466,12 @@ const updateLenderSettings = async (req, res) => {
   }
 };
 
-
-// GET /api/lender/transactions/:lenderId
 const getLenderTransactions = async (req, res) => {
   try {
     const { lenderId } = req.params;
 
     if (!lenderId) {
-      return res.status(400).json({
-        success: false,
-        message: "Lender ID is required",
-      });
+      return res.status(400).json({ success: false, message: "Lender ID is required" });
     }
 
     const transactions = await Transaction.find({ lenderId })
@@ -283,104 +479,93 @@ const getLenderTransactions = async (req, res) => {
       .populate("borrowerId", "fullname email")
       .populate("lenderId", "fullname email");
 
-    res.status(200).json({
-      success: true,
-      transactions,
-    });
+    return res.status(200).json({ success: true, transactions });
   } catch (err) {
-    console.error("Error fetching lender transactions:", err.message);
-    res.status(500).json({
+    console.error("getLenderTransactions error:", err.message);
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch transactions",
       error: err.message,
     });
   }
 };
-// Record a transaction (if calling manually after Metamask transfer)
+
 const recordTransaction = async (req, res) => {
   try {
-    const { lenderId, borrowerId, amount, type, purpose } = req.body;
+    const { lenderId, borrowerId, amount, type, purpose, hash } = req.body;
 
-    const transaction = new Transaction({
+    if (!lenderId || !borrowerId || !amount || !type || !hash) {
+      return res.status(400).json({ success: false, message: "Missing required transaction fields" });
+    }
+
+    const transaction = await Transaction.create({
       lenderId,
       borrowerId,
       amount,
       type,
       purpose,
+      hash,
     });
 
-    await transaction.save();
-
-    res.status(201).json({ success: true, message: "Transaction recorded successfully", transaction });
+    return res.status(201).json({
+      success: true,
+      message: "Transaction recorded successfully",
+      transaction,
+    });
   } catch (err) {
-    console.error("Error creating transaction:", err.message);
-    res.status(500).json({ success: false, message: "Failed to record transaction" });
+    console.error("recordTransaction error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to record transaction",
+      error: err.message,
+    });
   }
 };
 
-// GET /api/lender/loans/:lenderId
 const getLenderLoans = async (req, res) => {
   try {
     const lenderId = req.params.lenderId;
 
-    // Find loans for the lender or with "Pending" status
     const loans = await Loan.find({
-      $or: [
-        { lenderId: lenderId },
-        { status: "Pending" } // Optional: show unassigned pending loans
-      ]
-    });
+      $or: [{ lenderId }, { status: "Pending" }],
+    }).sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      loans,
-    });
+    return res.status(200).json({ success: true, loans });
   } catch (error) {
-    console.error("Error fetching loans:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to load loans",
-    });
+    console.error("getLenderLoans error:", error.message);
+    return res.status(500).json({ success: false, message: "Failed to load loans" });
   }
 };
 
-// GET /api/lender/all-loans
 const getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.find().sort({ createdAt: -1 }).populate("lenderId vendorId", "fullname email");
+    const loans = await Loan.find()
+      .sort({ createdAt: -1 })
+      .populate("lenderId vendorId", "fullname email");
 
-    res.status(200).json({
-      success: true,
-      loans,
-    });
+    return res.status(200).json({ success: true, loans });
   } catch (error) {
-    console.error("Error fetching all loans:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch all loans",
-    });
+    console.error("getAllLoans error:", error.message);
+    return res.status(500).json({ success: false, message: "Failed to fetch all loans" });
   }
 };
 
-// POST /api/lender/approve-loan/:loanId
 const approveLoan = async (req, res) => {
   try {
-    console.log("🔁 Approving loan...");
-    console.log("req.user:", req.user);
-
     const loanId = req.params.loanId;
     const lenderId = req.user?.id;
+    const { txHash } = req.body;
 
     if (!lenderId) {
       return res.status(401).json({ success: false, message: "Unauthorized: Lender ID missing" });
     }
 
-    const { txHash } = req.body;
     if (!txHash) {
       return res.status(400).json({ success: false, message: "Transaction hash required" });
     }
 
     const loan = await Loan.findById(loanId);
+
     if (!loan) {
       return res.status(404).json({ success: false, message: "Loan not found" });
     }
@@ -389,55 +574,28 @@ const approveLoan = async (req, res) => {
       return res.status(400).json({ success: false, message: "Loan already approved" });
     }
 
-    // Update loan
     loan.status = "Approved";
     loan.approvedAt = new Date();
     loan.lenderId = lenderId;
     loan.transactionHash = txHash;
-    loan.amount = parseFloat(loan.loanAmount); // Optional if already set
-
     await loan.save();
-    console.log("✅ Loan approved & updated.");
 
-    // DEBUG: Log transaction data before saving
-    console.log("📦 Creating transaction:", {
+    await Transaction.create({
       lenderId,
       borrowerId: loan.vendorId,
-      amount: loan.amount,
+      amount: parseFloat(loan.loanAmount) || 0,
       type: "Loan Disbursement",
       purpose: loan.reason,
       hash: txHash,
     });
 
-    // Save transaction
-    const transaction = new Transaction({
-      lenderId,
-      borrowerId: loan.vendorId,
-      amount: loan.amount,
-      type: "Loan Disbursement",
-      purpose: loan.reason,
-      hash: txHash,
-    });
-
-    try {
-      await transaction.save();
-      console.log("✅ Transaction saved to DB.");
-    } catch (transactionErr) {
-      console.error("❌ Failed to save transaction:", transactionErr.message);
-      return res.status(500).json({
-        success: false,
-        message: "Loan approved, but failed to save transaction.",
-        error: transactionErr.message,
-      });
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Loan approved and transaction recorded",
     });
   } catch (err) {
-    console.error("❌ Approval error:", err.message);
-    res.status(500).json({
+    console.error("approveLoan error:", err.message);
+    return res.status(500).json({
       success: false,
       message: "Failed to approve loan",
       error: err.message,
@@ -445,43 +603,49 @@ const approveLoan = async (req, res) => {
   }
 };
 
-
-// POST /api/lender/reject-loan/:loanId
 const rejectLoan = async (req, res) => {
   try {
     const loanId = req.params.loanId;
 
     const loan = await Loan.findById(loanId);
+
     if (!loan) {
       return res.status(404).json({ success: false, message: "Loan not found" });
     }
 
     if (loan.status === "Rejected" || loan.status === "Approved") {
-      return res.status(400).json({ success: false, message: `Loan is already ${loan.status.toLowerCase()}` });
+      return res.status(400).json({
+        success: false,
+        message: `Loan is already ${loan.status.toLowerCase()}`,
+      });
     }
 
-    await Loan.updateOne(
-        { _id: loanId },
-        { $set: { status: "Rejected" } }
-    );
+    loan.status = "Rejected";
+    await loan.save();
 
-    res.status(200).json({ success: true, message: "Loan rejected successfully" });
+    return res.status(200).json({ success: true, message: "Loan rejected successfully" });
   } catch (err) {
-    console.error("Error rejecting loan:", err.message);
-    res.status(500).json({ success: false, message: "Failed to reject loan", error: err.message });
+    console.error("rejectLoan error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reject loan",
+      error: err.message,
+    });
   }
 };
-// GET /api/lender/profile/:lenderId
+
 const getLenderById = async (req, res) => {
   try {
-    const lender = await Lender.findById(req.params.lenderId);
+    const lender = await Lender.findById(req.params.lenderId).select("-password -encryptedKYC");
+
     if (!lender) {
       return res.status(404).json({ success: false, message: "Lender not found" });
     }
-    res.status(200).json({ success: true, data: lender });
+
+    return res.status(200).json({ success: true, data: lender });
   } catch (error) {
-    console.error("Error fetching lender:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("getLenderById error:", error.message);
+    return res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 

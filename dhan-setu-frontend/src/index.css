@@ -2,10 +2,540 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional global styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #f9fafb; /* Tailwind gray-50 */
-  font-family: 'Inter', sans-serif;
+  background-color: #05070d;
+  color: #e2e8f0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.09), transparent 35%),
+    #05070d;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.6s ease-out;
+}
+
+/* Utility Classes */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Vendor Full Modern Theme */
+.vendor-modern-scope {
+  color: #dbe4ff;
+}
+
+.vendor-modern-scope .bg-white,
+.vendor-modern-scope .bg-white\/90,
+.vendor-modern-scope .bg-white\/80,
+.vendor-modern-scope .from-white,
+.vendor-modern-scope .to-gray-50,
+.vendor-modern-scope .to-gray-100,
+.vendor-modern-scope .bg-gray-50,
+.vendor-modern-scope .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.vendor-modern-scope .border-gray-200,
+.vendor-modern-scope .border-gray-200\/50,
+.vendor-modern-scope .border-gray-100,
+.vendor-modern-scope .border-slate-200,
+.vendor-modern-scope .border-slate-200\/50,
+.vendor-modern-scope .border-slate-100 {
+  border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+.vendor-modern-scope .text-gray-900,
+.vendor-modern-scope .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+.vendor-modern-scope .text-gray-800,
+.vendor-modern-scope .text-slate-800 {
+  color: #e2e8f0 !important;
+}
+
+.vendor-modern-scope .text-gray-700,
+.vendor-modern-scope .text-slate-700,
+.vendor-modern-scope .text-gray-600,
+.vendor-modern-scope .text-slate-600,
+.vendor-modern-scope .text-gray-500,
+.vendor-modern-scope .text-slate-500,
+.vendor-modern-scope .text-gray-400,
+.vendor-modern-scope .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.vendor-modern-scope .text-blue-900,
+.vendor-modern-scope .text-blue-800,
+.vendor-modern-scope .text-blue-700,
+.vendor-modern-scope .text-blue-600,
+.vendor-modern-scope .text-purple-700,
+.vendor-modern-scope .text-purple-600,
+.vendor-modern-scope .text-indigo-700,
+.vendor-modern-scope .text-indigo-600 {
+  color: #7dd3fc !important;
+}
+
+.vendor-modern-scope .text-emerald-700,
+.vendor-modern-scope .text-emerald-600,
+.vendor-modern-scope .text-green-700,
+.vendor-modern-scope .text-green-600 {
+  color: #34d399 !important;
+}
+
+.vendor-modern-scope .text-red-700,
+.vendor-modern-scope .text-red-600,
+.vendor-modern-scope .text-amber-700,
+.vendor-modern-scope .text-amber-600,
+.vendor-modern-scope .text-orange-700,
+.vendor-modern-scope .text-orange-600 {
+  color: #fda4af !important;
+}
+
+.vendor-modern-scope .rounded-3xl,
+.vendor-modern-scope .rounded-2xl,
+.vendor-modern-scope .rounded-xl {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.vendor-modern-scope input,
+.vendor-modern-scope textarea,
+.vendor-modern-scope select {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  color: #e2e8f0 !important;
+}
+
+.vendor-modern-scope .bg-blue-50,
+.vendor-modern-scope .bg-blue-100,
+.vendor-modern-scope .bg-purple-50,
+.vendor-modern-scope .bg-purple-100,
+.vendor-modern-scope .bg-emerald-50,
+.vendor-modern-scope .bg-emerald-100,
+.vendor-modern-scope .bg-amber-50,
+.vendor-modern-scope .bg-amber-100,
+.vendor-modern-scope .bg-red-50,
+.vendor-modern-scope .bg-red-100 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+.vendor-modern-scope input::placeholder,
+.vendor-modern-scope textarea::placeholder {
+  color: #64748b !important;
+}
+
+.vendor-modern-scope table thead {
+  background: rgba(15, 23, 42, 0.66) !important;
+}
+
+.vendor-modern-scope table tbody tr {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.vendor-modern-scope button:not([class*="from-"]) {
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+/* Lender Black Theme Scope */
+.lender-modern-scope {
+  color: #dbe4ff;
+}
+
+.lender-modern-scope .bg-white,
+.lender-modern-scope .bg-white\/95,
+.lender-modern-scope .bg-white\/90,
+.lender-modern-scope .bg-white\/80,
+.lender-modern-scope .bg-white\/70,
+.lender-modern-scope .bg-gray-50,
+.lender-modern-scope .bg-gray-100,
+.lender-modern-scope .bg-slate-50,
+.lender-modern-scope .bg-blue-50,
+.lender-modern-scope .bg-blue-100,
+.lender-modern-scope .bg-purple-50,
+.lender-modern-scope .bg-purple-100,
+.lender-modern-scope .bg-emerald-50,
+.lender-modern-scope .bg-emerald-100,
+.lender-modern-scope .bg-amber-50,
+.lender-modern-scope .bg-amber-100,
+.lender-modern-scope .bg-red-50,
+.lender-modern-scope .bg-red-100 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.lender-modern-scope .from-white,
+.lender-modern-scope .from-gray-50,
+.lender-modern-scope .from-slate-50,
+.lender-modern-scope .from-blue-50,
+.lender-modern-scope .from-purple-50,
+.lender-modern-scope .from-emerald-50,
+.lender-modern-scope .from-amber-50,
+.lender-modern-scope .from-red-50 {
+  --tw-gradient-from: rgba(15, 23, 42, 0.92) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position) !important;
+}
+
+.lender-modern-scope .via-blue-50,
+.lender-modern-scope .via-purple-50,
+.lender-modern-scope .via-slate-50,
+.lender-modern-scope .via-white {
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(30, 41, 59, 0.86) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+.lender-modern-scope .to-gray-50,
+.lender-modern-scope .to-gray-100,
+.lender-modern-scope .to-slate-100,
+.lender-modern-scope .to-blue-100,
+.lender-modern-scope .to-purple-100,
+.lender-modern-scope .to-emerald-100,
+.lender-modern-scope .to-amber-100,
+.lender-modern-scope .to-red-100,
+.lender-modern-scope .to-white {
+  --tw-gradient-to: rgba(2, 6, 23, 0.92) var(--tw-gradient-to-position) !important;
+}
+
+.lender-modern-scope .border-gray-200,
+.lender-modern-scope .border-gray-200\/50,
+.lender-modern-scope .border-gray-100,
+.lender-modern-scope .border-slate-200,
+.lender-modern-scope .border-slate-200\/50,
+.lender-modern-scope .border-slate-100,
+.lender-modern-scope .border-blue-200,
+.lender-modern-scope .border-purple-200,
+.lender-modern-scope .border-emerald-200,
+.lender-modern-scope .border-amber-200,
+.lender-modern-scope .border-red-200,
+.lender-modern-scope .border-white\/30,
+.lender-modern-scope .border-white\/40 {
+  border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+.lender-modern-scope .text-gray-900,
+.lender-modern-scope .text-slate-900,
+.lender-modern-scope .text-red-900 {
+  color: #f8fafc !important;
+}
+
+.lender-modern-scope .text-gray-800,
+.lender-modern-scope .text-slate-800,
+.lender-modern-scope .text-gray-700,
+.lender-modern-scope .text-slate-700,
+.lender-modern-scope .text-red-800 {
+  color: #e2e8f0 !important;
+}
+
+.lender-modern-scope .text-gray-600,
+.lender-modern-scope .text-slate-600,
+.lender-modern-scope .text-gray-500,
+.lender-modern-scope .text-slate-500,
+.lender-modern-scope .text-gray-400,
+.lender-modern-scope .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.lender-modern-scope .text-blue-700,
+.lender-modern-scope .text-blue-600,
+.lender-modern-scope .text-purple-700,
+.lender-modern-scope .text-purple-600,
+.lender-modern-scope .text-indigo-700,
+.lender-modern-scope .text-indigo-600 {
+  color: #7dd3fc !important;
+}
+
+.lender-modern-scope .text-emerald-700,
+.lender-modern-scope .text-emerald-600,
+.lender-modern-scope .text-green-700,
+.lender-modern-scope .text-green-600 {
+  color: #34d399 !important;
+}
+
+.lender-modern-scope .text-red-700,
+.lender-modern-scope .text-red-600,
+.lender-modern-scope .text-amber-700,
+.lender-modern-scope .text-amber-600,
+.lender-modern-scope .text-orange-700,
+.lender-modern-scope .text-orange-600 {
+  color: #fda4af !important;
+}
+
+.lender-modern-scope .rounded-3xl,
+.lender-modern-scope .rounded-2xl,
+.lender-modern-scope .rounded-xl {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.lender-modern-scope input,
+.lender-modern-scope textarea,
+.lender-modern-scope select {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  color: #e2e8f0 !important;
+}
+
+.lender-modern-scope input::placeholder,
+.lender-modern-scope textarea::placeholder {
+  color: #64748b !important;
+}
+
+.lender-modern-scope table thead {
+  background: rgba(15, 23, 42, 0.66) !important;
+}
+
+.lender-modern-scope table tbody tr {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.lender-modern-scope button:not([class*="from-"]) {
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+/* Global Black Theme Enforcement */
+.bg-white,
+.bg-white\/95,
+.bg-white\/90,
+.bg-white\/80,
+.bg-white\/70,
+.bg-gray-50,
+.bg-gray-100,
+.bg-slate-50,
+.bg-blue-50,
+.bg-blue-100,
+.bg-purple-50,
+.bg-purple-100,
+.bg-emerald-50,
+.bg-emerald-100,
+.bg-amber-50,
+.bg-amber-100,
+.bg-red-50,
+.bg-red-100 {
+  background-color: rgba(15, 23, 42, 0.55) !important;
+}
+
+.from-white,
+.from-gray-50,
+.from-slate-50,
+.from-blue-50,
+.from-purple-50,
+.from-emerald-50,
+.from-amber-50,
+.from-red-50 {
+  --tw-gradient-from: rgba(15, 23, 42, 0.9) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position) !important;
+}
+
+.via-blue-50,
+.via-purple-50,
+.via-slate-50,
+.via-white {
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(30, 41, 59, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+.to-gray-50,
+.to-gray-100,
+.to-slate-100,
+.to-blue-100,
+.to-purple-100,
+.to-emerald-100,
+.to-amber-100,
+.to-red-100,
+.to-white {
+  --tw-gradient-to: rgba(2, 6, 23, 0.95) var(--tw-gradient-to-position) !important;
+}
+
+.text-gray-900,
+.text-slate-900,
+.text-red-900 {
+  color: #f8fafc !important;
+}
+
+.text-gray-800,
+.text-slate-800,
+.text-gray-700,
+.text-slate-700,
+.text-red-800 {
+  color: #e2e8f0 !important;
+}
+
+.text-gray-600,
+.text-slate-600,
+.text-gray-500,
+.text-slate-500,
+.text-gray-400,
+.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  color: #e2e8f0 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* ============================================================
+   SUPPLEMENTAL GLOBAL DARK THEME — fills remaining gaps
+   (scoped vendor/lender rules keep higher specificity)
+   ============================================================ */
+
+/* Additional background overrides */
+.bg-gray-200  { background-color: rgba(30, 41, 59, 0.70) !important; }
+.bg-gray-300  { background-color: rgba(51, 65, 85, 0.65) !important; }
+.bg-orange-50 { background-color: rgba(124, 45, 18, 0.10) !important; }
+
+/* Additional text colour overrides */
+.text-blue-900, .text-blue-800 { color: #bfdbfe !important; }
+.text-blue-700, .text-blue-600 { color: #93c5fd !important; }
+.text-green-900, .text-green-800 { color: #a7f3d0 !important; }
+.text-green-700, .text-green-600 { color: #6ee7b7 !important; }
+.text-red-700,  .text-red-600   { color: #fca5a5 !important; }
+.text-amber-700, .text-amber-600 { color: #fcd34d !important; }
+
+/* Additional border overrides */
+.border-gray-200  { border-color: rgba(148, 163, 184, 0.22) !important; }
+.border-gray-300  { border-color: rgba(100, 116, 139, 0.30) !important; }
+.border-slate-200 { border-color: rgba(148, 163, 184, 0.20) !important; }
+.border-slate-300 { border-color: rgba(100, 116, 139, 0.28) !important; }
+.border-red-200   { border-color: rgba(239, 68, 68, 0.30) !important; }
+.border-blue-200  { border-color: rgba(59, 130, 246, 0.30) !important; }
+.border-green-200 { border-color: rgba(34, 197, 94, 0.30) !important; }
+
+/* Gradient via dim (sidebar divider lines) */
+.via-slate-300 {
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(148, 163, 184, 0.18) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+/* Additional gradient-to overrides (NotFound, etc.) */
+.to-orange-50, .to-blue-50, .to-purple-50 {
+  --tw-gradient-to: rgba(2, 6, 23, 0.95) var(--tw-gradient-to-position) !important;
+}
+
+/* Sidebar nav link hover gradient fix */
+.hover\:from-blue-50:hover {
+  --tw-gradient-from: rgba(30, 41, 59, 0.55) var(--tw-gradient-from-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.hover\:to-purple-50:hover {
+  --tw-gradient-to: rgba(40, 25, 65, 0.55) var(--tw-gradient-to-position) !important;
+}
+
+/* Hover bg overrides */
+.hover\:bg-gray-50:hover  { background-color: rgba(15, 23, 42, 0.50) !important; }
+.hover\:bg-gray-300:hover { background-color: rgba(51, 65, 85, 0.70) !important; }
+
+/* Logo gradient text — lighten blue-700 start for dark backgrounds */
+.from-blue-700 {
+  --tw-gradient-from: #60a5fa var(--tw-gradient-from-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+/* Dark scrollbar track */
+::-webkit-scrollbar-track { background: #0f1929 !important; }
+
+/* Input focus ring on dark backgrounds */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus {
+  border-color: rgba(96, 165, 250, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12) !important;
+  outline: none !important;
+}
+
+/* Disabled inputs */
+input:disabled, textarea:disabled, select:disabled {
+  background-color: rgba(15, 23, 42, 0.30) !important;
+  color: #475569 !important;
+  cursor: not-allowed;
 }

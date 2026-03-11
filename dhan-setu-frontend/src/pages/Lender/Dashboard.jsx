@@ -1,157 +1,311 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Card from "../../components/common/Card";
+import { useNavigate } from "react-router-dom";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+  TrendingUp,
+  Users,
+  DollarSign,
+  Wallet,
+  RefreshCw,
+  CheckCircle,
+  ArrowUpRight,
+  Activity,
+  ShieldCheck,
+  Calculator,
+  Radar
+} from "lucide-react";
+import StatCard from "../../components/common/StatCard";
+import Table from "../../components/common/Table";
+import Badge from "../../components/common/Badge";
+import Alert from "../../components/common/Alert";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const Dashboard = () => {
+const LenderDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+
+  const fetchDashboard = async (showRefreshing = false) => {
+    if (showRefreshing) setRefreshing(true);
+    else setLoading(true);
+
+    if (!userId || !token) {
+      setError("You are not logged in. Please login again.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/lender/dashboard/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const transactions = (res.data.transactions || []).map((tx) => ({
+        ...tx,
+        date: tx.date ? new Date(tx.date).toLocaleDateString("en-IN") : new Date(tx.createdAt).toLocaleDateString("en-IN"),
+        amount: Number(tx.amount) || 0,
+      }));
+
+      setDashboardData({
+        ...res.data,
+        transactions,
+        lenderName: res.data.lenderName || localStorage.getItem("lenderName") || "Lender"
+      });
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      if (!userId || !token) {
-        setError("Unauthorized. Please login again.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await axios.get(
-          `http://localhost:5000/api/lender/dashboard/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const transactions = (res.data.transactions || []).map((tx) => {
-          let dateStr = tx.date || tx.createdAt;
-          let parsedDate = new Date(dateStr);
-          if (isNaN(parsedDate)) parsedDate = new Date(); // fallback
-          return { ...tx, date: parsedDate.toLocaleDateString("en-IN") };
-        });
-
-        setDashboardData({ ...res.data, transactions });
-      } catch (err) {
-        const msg =
-          err.response?.data?.message || "Failed to fetch dashboard data.";
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboard();
-  }, [userId, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (loading) return <p className="text-center mt-10">Loading dashboard...</p>;
-  if (error) return <p className="text-red-600 text-center mt-10">{error}</p>;
-  if (!dashboardData) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative inline-block">
+            <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            <div className="absolute inset-0 w-20 h-20 border-4 border-purple-200 border-b-purple-600 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Loading Your Dashboard
+            </h3>
+            <p className="text-sm text-gray-500">Preparing your portfolio overview...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const {
-    walletBalance = "0.0000 ETH",
-    loansFunded = 0,
-    activeVendors = 0,
-    lastFundedLoan = { amount: 0, date: "N/A" },
-    nextExpectedRepayment = "N/A",
-    totalReceived = 0,
-    transactions = [],
-  } = dashboardData;
-
-  const stats = [
-    { title: "Wallet Balance", content: walletBalance, color: "bg-blue-100" },
-    { title: "Loans Funded", content: `${loansFunded} ETH`, color: "bg-green-100" },
-    { title: "Active Vendors", content: `${activeVendors}`, color: "bg-yellow-100" },
+  const monthlyData = [
+    { month: 'Jan', loans: 4, revenue: 12 },
+    { month: 'Feb', loans: 6, revenue: 18 },
+    { month: 'Mar', loans: 8, revenue: 24 },
+    { month: 'Apr', loans: 5, revenue: 15 },
+    { month: 'May', loans: 9, revenue: 27 },
+    { month: 'Jun', loans: 12, revenue: 36 },
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Welcome, Lender</h1>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} title={stat.title} content={stat.content} color={stat.color} />
-        ))}
-      </div>
-
-      {/* Loan Summary */}
-      <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800">Loan Summary</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
-            <h3 className="text-sm text-gray-500 mb-1">Last Funded Loan</h3>
-            <p className="text-lg font-medium text-gray-800">{lastFundedLoan.amount} ETH</p>
-            <p className="text-sm text-gray-400">on {lastFundedLoan.date}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
-            <h3 className="text-sm text-gray-500 mb-1">Next Expected Repayment</h3>
-            <p className="text-lg font-medium text-gray-800">{nextExpectedRepayment}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
-            <h3 className="text-sm text-gray-500 mb-1">Total Received</h3>
-            <p className="text-lg font-medium text-gray-800">{totalReceived} ETH</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100">
+      {/* Animated Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-white/90">Active Portfolio</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+                Welcome, {dashboardData?.lenderName || "Lender"}!
+              </h1>
+              <p className="text-white/80 text-base sm:text-lg">Monitor your investments and returns</p>
+            </div>
+            <button
+              onClick={() => fetchDashboard(true)}
+              disabled={refreshing}
+              className="p-4 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 hover:bg-white/30 transition-all duration-300 disabled:opacity-50 hover:scale-105"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Chart Section */}
-      <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">Loan & Repayment History</h2>
-        {transactions.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={transactions}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis unit=" ETH" />
-              <Tooltip />
-              <Line type="monotone" dataKey="amount" stroke="#4F46E5" />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-center text-gray-600">No transactions yet.</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-0 pb-12">
+        {/* Error Banner */}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError("")} className="mb-6" />
         )}
-      </div>
 
-      {/* Transactions Table */}
-      <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white shadow rounded">
-            <thead className="bg-gray-100 text-left">
-              <tr>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2">Amount (ETH)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx, index) => (
-                <tr key={index} className="border-t">
-                  <td className="px-4 py-2">{tx.date}</td>
-                  <td className="px-4 py-2">{tx.type}</td>
-                  <td className="px-4 py-2">{tx.amount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Wallet Balance"
+            value={dashboardData?.walletBalance || "0.000 ETH"}
+            icon={Wallet}
+            color="blue"
+            trend="up"
+            trendValue="+8.2%"
+          />
+          <StatCard
+            title="Loans Funded"
+            value={dashboardData?.loansFunded || "0"}
+            subtitle={`${dashboardData?.activeLoans || 0} active`}
+            icon={TrendingUp}
+            color="green"
+          />
+          <StatCard
+            title="Active Vendors"
+            value={dashboardData?.activeVendors || "0"}
+            icon={Users}
+            color="purple"
+          />
+          <StatCard
+            title="Total Received"
+            value={`${dashboardData?.totalReceived || "0.000"} ETH`}
+            subtitle="Repayments received"
+            icon={DollarSign}
+            color="amber"
+            trend="up"
+            trendValue="+12%"
+          />
+        </div>
+
+        {/* Charts & Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Performance Chart */}
+          <div className="lg:col-span-2 rounded-3xl bg-white/90 backdrop-blur-xl border border-gray-200/50 p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-600" />
+              Lending Performance
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    padding: '12px'
+                  }}
+                />
+                <Line type="monotone" dataKey="loans" stroke="#2563eb" strokeWidth={3} dot={{ fill: '#2563eb', r: 4 }} />
+                <Line type="monotone" dataKey="revenue" stroke="#9333ea" strokeWidth={3} dot={{ fill: '#9333ea', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="space-y-6">
+            <div className="rounded-3xl bg-white/90 backdrop-blur-xl border border-gray-200/50 p-6 shadow-xl">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                {[
+                  {
+                    title: "View All Loans",
+                    subtitle: "Manage your funding pipeline",
+                    path: "/lender/loans",
+                    className: "bg-gradient-to-r from-blue-600 to-cyan-600 text-white",
+                    icon: TrendingUp,
+                  },
+                  {
+                    title: "Risk Analyzer",
+                    subtitle: "Run pre-approval stress checks",
+                    path: "/lender/risk-analyzer",
+                    className: "bg-gradient-to-r from-emerald-600 to-teal-600 text-white",
+                    icon: ShieldCheck,
+                  },
+                  {
+                    title: "Yield Planner",
+                    subtitle: "Forecast expected earnings",
+                    path: "/lender/yield-planner",
+                    className: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
+                    icon: Calculator,
+                  },
+                  {
+                    title: "Opportunity Radar",
+                    subtitle: "Scan top scoring deals",
+                    path: "/lender/opportunity-radar",
+                    className: "bg-gradient-to-r from-slate-800 to-slate-700 text-white",
+                    icon: Radar,
+                  },
+                ].map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button
+                      key={action.title}
+                      onClick={() => navigate(action.path)}
+                      className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] ${action.className}`}
+                    >
+                      <div className="absolute inset-0 bg-white/15 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="font-semibold">{action.title}</p>
+                          <p className="text-xs text-white/85">{action.subtitle}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ActionIcon className="w-5 h-5" />
+                          <ArrowUpRight className="w-5 h-5 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Next Expected Repayment */}
+            {dashboardData?.nextExpectedRepayment && dashboardData.nextExpectedRepayment !== "N/A" && (
+              <div className="rounded-3xl bg-gradient-to-br from-blue-500 to-purple-500 p-6 shadow-xl text-white">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-white/20 backdrop-blur-xl">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white/90">Next Repayment Expected</p>
+                    <p className="text-2xl font-bold mt-1">{dashboardData.nextExpectedRepayment}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="rounded-3xl bg-white/90 backdrop-blur-xl border border-gray-200/50 p-6 shadow-xl">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Recent Transactions</h3>
+          {dashboardData?.transactions && dashboardData.transactions.length > 0 ? (
+            <Table
+              columns={[
+                { key: 'type', label: 'Type', sortable: true },
+                { key: 'date', label: 'Date', sortable: true },
+                { 
+                  key: 'amount', 
+                  label: 'Amount', 
+                  sortable: true,
+                  render: (value) => `${value?.toFixed(4) || '0.000'} ETH`
+                },
+                { 
+                  key: 'status', 
+                  label: 'Status',
+                  render: (value) => <Badge variant={value === 'Completed' ? 'success' : 'warning'}>{value || 'Pending'}</Badge>
+                },
+              ]}
+              data={dashboardData.transactions.slice(0, 10)}
+              striped
+            />
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p className="font-medium">No transactions yet</p>
+              <p className="text-sm mt-1">Start lending to see your transaction history</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default LenderDashboard;

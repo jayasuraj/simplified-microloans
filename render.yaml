@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: dhansetu-api
+    env: node
+    region: oregon
+    plan: free
+    
+    buildCommand: npm install
+    startCommand: npm start
+    
+    rootDir: backend
+    
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: true
+      - key: LOG_LEVEL
+        value: info
+    
+    autoDeploy: true
+
+  - type: static
+    name: dhansetu-frontend
+    staticPublishPath: build
+    buildCommand: npm run build
+    rootDir: dhan-setu-frontend
+    autoDeploy: true
+    envVars:
+      - key: REACT_APP_ENV
+        value: production

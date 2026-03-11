@@ -7,6 +7,8 @@ const {
   loginVendor,
   getVendorById,
   getVendorDashboard,
+  getVendorLoans,
+  updateVendorProfile,
   uploadProfilePhoto,
   updateVendorSettings,
   recordRepayment,
@@ -28,18 +30,28 @@ router.post('/register', registerVendor);
 // Route: Vendor login
 router.post('/login', loginVendor);
 
-// Route: Get vendor by ID
-router.get('/:vendorId', getVendorById);
-
 // Route: Get vendor dashboard (protected)
 router.get('/dashboard/:vendorId', authMiddleware, getVendorDashboard);
 
+// Route: Get vendor loans (protected) - for modern UI
+router.get('/loans/:vendorId', authMiddleware, getVendorLoans);
+
 // Route: Upload profile photo (protected)
 router.post('/:vendorId/upload-photo', authMiddleware, upload.single('image'), uploadProfilePhoto);
+router.post('/:vendorId/upload-profile', authMiddleware, upload.single('profileImage'), uploadProfilePhoto);
 
 router.put('/:vendorId/update', authMiddleware, updateVendorSettings);
 
+// Route: Update vendor profile (protected) - for modern UI
+router.put('/profile/:vendorId', authMiddleware, updateVendorProfile);
+
 router.post('/repay', authMiddleware, recordRepayment);
+
+// Alias route for profile style access
+router.get('/profile/:vendorId', authMiddleware, getVendorById);
+
+// Route: Get vendor by ID (keep this generic route last)
+router.get('/:vendorId', getVendorById);
 
 
 

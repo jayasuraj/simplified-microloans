@@ -1,12 +1,139 @@
-# Getting Started with Create React App
+# DhanSetu — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> React 19 · Tailwind CSS · React Router v7 · Ethers.js · Dark Theme
 
-## Available Scripts
+This is the frontend application for **DhanSetu**, a blockchain-powered microloan platform for India's street vendors.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server (http://localhost:3000)
+npm start
+
+# Production build (output: build/)
+npm run build
+
+# Run tests
+npm test
+```
+
+---
+
+## Environment Variables
+
+Create `.env` in this directory:
+
+```env
+REACT_APP_LENDER_API_KEY=your_lender_api_key
+REACT_APP_API_URL=http://localhost:5000
+```
+
+---
+
+## Key Technologies
+
+| Package | Version | Purpose |
+|---|---|---|
+| react | 19.x | Core UI library |
+| react-router-dom | 7.x | Client-side routing |
+| tailwindcss | 3.x | Utility-first CSS |
+| lucide-react | 0.577+ | Icon set |
+| axios | 1.x | HTTP requests to backend |
+| ethers | 6.x | Ethereum wallet interaction |
+| recharts | 3.x | Charts for dashboards |
+| react-toastify | 11.x | Toast notifications |
+
+---
+
+## Folder Overview
+
+```
+src/
+├── App.js                 # Root router
+├── index.css              # Global dark theme CSS
+├── layouts/
+│   └── DashboardLayout.jsx  # Sidebar + hamburger nav
+├── pages/
+│   ├── Home.jsx           # Public landing page
+│   ├── Auth/              # Login, Register, OTP, ForgotPwd, Reset, 2FA
+│   ├── Vendor/            # All vendor dashboard pages (15 pages)
+│   └── Lender/            # All lender dashboard pages (12 pages)
+├── components/
+│   └── common/            # Button, Input, Select, Alert, Badge, Table, StatCard,
+│                          # Header, Footer, QuickAccessDock, ProtectedRoute, ErrorBoundary
+└── utils/                 # constants, formatters, validators
+```
+
+---
+
+## Routes Summary
+
+| Path | Page |
+|---|---|
+| `/` | Home (landing page) |
+| `/login` | Login (vendor or lender) |
+| `/register` | 3-step registration |
+| `/verify-otp` | Email OTP verification |
+| `/forgot-password` | Request password reset |
+| `/reset-password` | Set new password |
+| `/email-verified` | Verification success |
+| `/2fa-setup` | TOTP 2FA setup |
+| `/vendor` | Vendor dashboard |
+| `/vendor/loans` | Loan applications |
+| `/vendor/request-loan` | Apply for loan |
+| `/vendor/transactions` | Transaction history |
+| `/vendor/planner` | Repayment calculator |
+| `/vendor/checklist` | Daily task checklist |
+| `/vendor/reminders` | Reminder center |
+| `/vendor/expense-tracker` | Expense tracking |
+| `/vendor/sales-booster` | Business tips |
+| `/vendor/easy` | Easy assist |
+| `/vendor/tutorial` | Onboarding tutorial |
+| `/vendor/quick-guide` | Visual quick guide |
+| `/vendor/profile` | Profile |
+| `/vendor/settings` | Settings |
+| `/vendor/help` | Help center |
+| `/lender` | Lender dashboard |
+| `/lender/loans` | Loan requests |
+| `/lender/portfolio` | Investment portfolio |
+| `/lender/investments` | Investment history |
+| `/lender/transactions` | Transaction log |
+| `/lender/withdrawal` | Withdraw funds |
+| `/lender/risk-analyzer` | Risk scoring tool |
+| `/lender/yield-planner` | Return calculator |
+| `/lender/opportunity-radar` | Opportunity finder |
+| `/lender/profile` | Profile |
+| `/lender/settings` | Settings |
+| `/lender/help` | Help center |
+
+---
+
+## Theme & Design System
+
+- **Base bg:** `#05070d` (near-black)
+- **Dashboard bg:** `#0A0F1E`
+- **Card bg:** `bg-slate-900/55` with `backdrop-blur`
+- **Borders:** `border-slate-600/30`
+- **Primary accent:** cyan → blue gradient (`from-cyan-500 to-blue-600`)
+- **Text:** slate-100 / slate-300 / slate-400
+- **CSS scope classes:** `vendor-modern-scope`, `lender-modern-scope` (applied in DashboardLayout)
+
+---
+
+## Build Output
+
+```
+build/static/js/main.*.js    ~365 kB (gzipped)
+build/static/css/main.*.css  ~18 kB  (gzipped)
+```
+
+For full project documentation, see the [root README](../README.md).
+
 
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
