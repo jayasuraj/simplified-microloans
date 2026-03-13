@@ -15,16 +15,33 @@ connectDB();
 const app = express();
 
 // Global Middlewares
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://localhost:3001",
-].filter(Boolean);
+const normalizeOrigin = (value) =>
+  String(value || '')
+    .trim()
+    .replace(/\/+$/, '');
+
+const parseOriginList = (value) =>
+  String(value || '')
+    .split(',')
+    .map((item) => normalizeOrigin(item))
+    .filter(Boolean);
+
+const allowedOrigins = new Set([
+  ...parseOriginList(process.env.FRONTEND_URL),
+  ...parseOriginList(process.env.FRONTEND_URLS),
+  normalizeOrigin('http://localhost:3000'),
+  normalizeOrigin('http://localhost:3001'),
+]);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (allowedOrigins.has(normalizedOrigin)) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));

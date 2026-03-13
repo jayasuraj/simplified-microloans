@@ -15,7 +15,11 @@ export const BLOCKCHAIN_CONFIG = {
   
   // API Configuration
   API: {
-    baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+    baseUrl:
+      process.env.REACT_APP_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://dhansetu-api.onrender.com/api'
+        : 'http://localhost:5000/api'),
     timeout: 30000,
   },
   

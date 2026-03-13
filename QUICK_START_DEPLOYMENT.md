@@ -71,7 +71,7 @@ Users access: https://your-app.netlify.app
    FAST2SMS_API_KEY      = u8s7e32W5pFqh16rJoXlDwmAEKCjVYbSHkIaRzGUxQ40cMdigNXU0IB1KNmqRyfYz3iawuVQnH4pSODZ
    KYC_SECRET            = supersecurekey
    API_KEY               = 91821295770
-   FRONTEND_URL          = (leave empty, update after Netlify deploy)
+   FRONTEND_URL          = (leave empty for now; must be exact Netlify origin later)
    ```
 5. **Create Web Service** button
 6. ⏳ Wait 3-5 minutes for deployment
@@ -123,6 +123,8 @@ Users access: https://your-app.netlify.app
    ```
    FRONTEND_URL = https://your-site-name.netlify.app
    ```
+   Important: use origin only (no trailing slash, no /login, no /api path)
+   Example for this project: FRONTEND_URL = https://dhan-setu.netlify.app
 4. **Save** button
 5. Render auto-redeploys (~1 minute)
 6. ✅ Done!

@@ -58,7 +58,12 @@ export const TRANSACTION_TYPES = {
 /**
  * API Endpoints
  */
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const LOCAL_API_FALLBACK = 'http://localhost:5000/api';
+const PROD_API_FALLBACK = 'https://dhansetu-api.onrender.com/api';
+
+export const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? PROD_API_FALLBACK : LOCAL_API_FALLBACK);
 
 export const API_ENDPOINTS = {
   // Vendor endpoints
